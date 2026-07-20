@@ -1,18 +1,12 @@
 import { NextResponse } from "next/server";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "@/prisma/generated/prisma/client/client";
-
-const getClient = () => {
-  const adapter = new PrismaBetterSqlite3({ url: "file:./dev.db" });
-  return new PrismaClient({ adapter });
-};
+import { db } from "@/lib/db";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const { id } = await params;
 
     const agent = await prisma.agent.findUnique({
@@ -65,7 +59,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const { id } = await params;
     const body = await request.json();
     const { name, email, phone, baseSalary, rentAllowance, socialSecurity } = body;
@@ -94,7 +88,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const { id } = await params;
 
     await prisma.agent.delete({

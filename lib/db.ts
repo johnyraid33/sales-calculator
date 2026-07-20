@@ -1,7 +1,8 @@
 import { PrismaClient } from "@/prisma/generated/prisma/client/client";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
-const adapter = new PrismaBetterSqlite3({ url: "file:./dev.db" });
+const dbUrl = process.env.DATABASE_URL || "file:./dev.db";
+const adapter = new PrismaBetterSqlite3({ url: dbUrl });
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
 

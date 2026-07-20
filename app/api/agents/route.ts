@@ -1,17 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "@/prisma/generated/prisma/client/client";
-
-// Ensure Prisma client is instantiated with adapter
-const getClient = () => {
-  const adapter = new PrismaBetterSqlite3({ url: "file:./dev.db" });
-  return new PrismaClient({ adapter });
-};
 
 export async function GET() {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const agents = await prisma.agent.findMany({
       include: {
         transactions: true,
@@ -57,7 +49,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const body = await request.json();
     const { name, email, phone, baseSalary, rentAllowance, socialSecurity } = body;
 

@@ -1,15 +1,9 @@
 import { NextResponse } from "next/server";
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient } from "@/prisma/generated/prisma/client/client";
-
-const getClient = () => {
-  const adapter = new PrismaBetterSqlite3({ url: "file:./dev.db" });
-  return new PrismaClient({ adapter });
-};
+import { db } from "@/lib/db";
 
 export async function GET(request: Request) {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const { searchParams } = new URL(request.url);
     const agentId = searchParams.get("agentId");
 
@@ -34,7 +28,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const body = await request.json();
     const { date, amount, type, memo, agentId } = body;
 
@@ -64,7 +58,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const body = await request.json();
     const { id, date, amount, type, memo, agentId } = body;
 
@@ -92,7 +86,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const prisma = getClient();
+    const prisma = db;
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
 
