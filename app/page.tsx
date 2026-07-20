@@ -399,14 +399,11 @@ export default function Home() {
   const totalCommissionsDue = transactions.reduce((sum, t) => sum + t.commission, 0);
 
   const totalPaymentsMade = payments.reduce((sum, p) => {
-    if (p.type === "DEDUCTION") return sum - p.amount;
+    if (p.type === "DEDUCTION") return sum - Math.abs(p.amount);
     return sum + p.amount;
   }, 0);
 
-  const outstandingBalance = totalCommissionsDue - payments.filter(p => p.type === "COMMISSION" || p.type === "RENT_ALLOWANCE").reduce((sum, p) => {
-    if (p.type === "DEDUCTION") return sum - p.amount;
-    return sum + p.amount;
-  }, 0);
+  const outstandingBalance = totalCommissionsDue - totalPaymentsMade;
 
   // Group by Month for Charts & Reconciliation
   const getMonthlyBreakdown = () => {
