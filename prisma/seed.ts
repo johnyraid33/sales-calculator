@@ -9,11 +9,11 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Seeding database...");
 
-  // Clean existing database records
-  await prisma.payment.deleteMany({});
-  await prisma.transaction.deleteMany({});
-  await prisma.agent.deleteMany({});
-  console.log("Database cleared.");
+  const agentCount = await prisma.agent.count();
+  if (agentCount > 0) {
+    console.log("Database already has agent data. Skipping seeding to prevent overwriting.");
+    return;
+  }
 
   // 1. Create default Agent (Johny)
   const agent = await prisma.agent.create({
