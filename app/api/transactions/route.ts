@@ -43,9 +43,9 @@ export async function POST(request: Request) {
       agentId,
     } = body;
 
-    if (!client || !price || !agentId || !dealType) {
+    if (!client || !price || !dealType) {
       return NextResponse.json(
-        { error: "Client, price, agentId, and dealType are required" },
+        { error: "Client, price, and dealType are required" },
         { status: 400 }
       );
     }
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
         commission: calculatedCommission,
         dealType,
         paymentStatus: paymentStatus || "UNPAID",
-        agentId,
+        agentId: (agentId === "none" || !agentId) ? null : agentId,
       },
     });
 
@@ -119,7 +119,7 @@ export async function PUT(request: Request) {
         commission: calculatedCommission,
         dealType,
         paymentStatus,
-        agentId,
+        agentId: (agentId === "none" || !agentId) ? null : agentId,
       },
     });
 

@@ -139,7 +139,7 @@ export default function Home() {
   const [txCustomRate, setTxCustomRate] = useState("");
   const [txDealType, setTxDealType] = useState("SALE");
   const [txStatus, setTxStatus] = useState("PAID");
-  const [txAgentId, setTxAgentId] = useState("");
+  const [txAgentId, setTxAgentId] = useState("none");
 
   // Form Fields - Payment
   const [pmtDate, setPmtDate] = useState("");
@@ -170,9 +170,9 @@ export default function Home() {
       setPayments(dataPmt);
 
       if (dataAgents.length > 0) {
-        setTxAgentId(dataAgents[0].id);
         setPmtAgentId(dataAgents[0].id);
       }
+      setTxAgentId("none");
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
@@ -256,7 +256,7 @@ export default function Home() {
       setTxPrice(tx.price.toString());
       setTxDealType(tx.dealType);
       setTxStatus(tx.paymentStatus);
-      setTxAgentId(tx.agentId);
+      setTxAgentId(tx.agentId || "none");
 
       const ratePct = (tx.rate * 100).toString();
       if (["1", "1.5", "2", "2.5", "5", "50"].includes(ratePct)) {
@@ -278,7 +278,7 @@ export default function Home() {
       setTxRate("0.01");
       setTxCustomRate("");
       setTxStatus("PAID");
-      if (agents.length > 0) setTxAgentId(agents[0].id);
+      setTxAgentId("none");
     }
     setTxDialogOpen(true);
   };
@@ -303,7 +303,7 @@ export default function Home() {
           rate: finalRate,
           dealType: txDealType,
           paymentStatus: txStatus,
-          agentId: txAgentId,
+          agentId: (txAgentId === "none" || !txAgentId) ? null : txAgentId,
         }),
       });
 
@@ -904,7 +904,7 @@ export default function Home() {
                             {new Date(tx.date).toLocaleDateString("en-GB")}
                           </TableCell>
                           <TableCell className="font-semibold">
-                            {tx.agent?.name}
+                            {tx.agent?.name || "Direct"}
                           </TableCell>
                           <TableCell>
                             <p className="font-medium">{tx.client}</p>
@@ -1352,6 +1352,7 @@ export default function Home() {
                       <SelectValue placeholder="Select Agent" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">None (Direct Deal)</SelectItem>
                       {agents.map((a) => (
                         <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                       ))}

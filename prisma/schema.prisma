@@ -33,8 +33,8 @@ model Transaction {
   commission    Float    // price * rate
   dealType      String   // "SALE" | "RENT"
   paymentStatus String   // "UNPAID" | "PAID" | "PARTIALLY_PAID"
-  agentId       String
-  agent         Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  agentId       String?
+  agent         Agent?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
