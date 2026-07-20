@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   DollarSign,
   TrendingUp,
@@ -21,6 +22,7 @@ import {
   Layers,
   ArrowUpRight,
   UserPlus,
+  LogOut,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -80,11 +82,24 @@ interface Payment {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  const handleLogout = async () => {
+    try {
+      const res = await fetch("/api/logout", { method: "POST" });
+      if (res.ok) {
+        router.push("/login");
+        router.refresh();
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   // Filter States
   const [txSearch, setTxSearch] = useState("");
@@ -524,9 +539,18 @@ export default function Home() {
           </nav>
         </div>
 
-        <div className="text-xs text-muted-foreground pt-4 border-t">
-          <p>© 2026 Ark Noah Holdings</p>
-          <p className="mt-1">Version 1.0.0 (Prisma SQLite)</p>
+        <div className="pt-4 border-t space-y-4">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-all text-left"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </button>
+          <div className="text-[10px] text-muted-foreground">
+            <p>© 2026 Ark Noah Holdings</p>
+            <p className="mt-1">Version 1.0.0 (Prisma SQLite)</p>
+          </div>
         </div>
       </aside>
 
