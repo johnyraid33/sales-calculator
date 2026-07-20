@@ -30,11 +30,10 @@ async function main() {
   console.log(`Created default agent: ${agent.name} (${agent.id})`);
 
   // 2. Read financial_data.json
-  const jsonPath = "/Users/yevhenpooishchuk/Agents/reconciliation_dashboard.html"; // We can also read from the exact JSON file scratch folder
-  const jsonScratchPath = "/Users/yevhenpooishchuk/.gemini/antigravity/brain/f6af0972-3630-4b04-974c-3b26af2c79b1/scratch/financial_data.json";
+  const jsonPath = path.join(__dirname, "financial_data.json");
 
-  if (fs.existsSync(jsonScratchPath)) {
-    const rawData = fs.readFileSync(jsonScratchPath, "utf-8");
+  if (fs.existsSync(jsonPath)) {
+    const rawData = fs.readFileSync(jsonPath, "utf-8");
     const parsedData = JSON.parse(rawData);
 
     // Seed Sales (Transactions)
