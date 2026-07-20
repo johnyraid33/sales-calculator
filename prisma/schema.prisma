@@ -1,0 +1,52 @@
+datasource db {
+  provider = "sqlite"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma/client"
+}
+
+model Agent {
+  id             String        @id @default(uuid())
+  name           String
+  email          String?
+  phone          String?
+  baseSalary     Float         @default(0)
+  rentAllowance  Float         @default(0)
+  socialSecurity Float         @default(0)
+  transactions   Transaction[]
+  payments       Payment[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Transaction {
+  id            String   @id @default(uuid())
+  date          DateTime
+  client        String
+  partnerAgency String?
+  type          String?  // Unit type / number
+  project       String?
+  price         Float
+  rate          Float    // e.g. 0.01 for 1%, 0.50 for 50
+  commission    Float    // price * rate
+  dealType      String   // "SALE" | "RENT"
+  paymentStatus String   // "UNPAID" | "PAID" | "PARTIALLY_PAID"
+  agentId       String
+  agent         Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  date      DateTime
+  amount    Float
+  type      String   // "SALARY" | "COMMISSION" | "RENT_ALLOWANCE" | "BONUS" | "EXPENSE" | "DEDUCTION"
+  memo      String?
+  agentId   String
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
