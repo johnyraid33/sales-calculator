@@ -1,5 +1,8 @@
 {
   "name": "sales-calculator",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "version": "0.1.0",
   "private": true,
   "scripts": {
