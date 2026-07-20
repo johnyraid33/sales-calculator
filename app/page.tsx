@@ -264,7 +264,7 @@ export default function Home() {
         setTxCustomRate("");
       } else {
         setTxRate("custom");
-        setTxCustomRate(tx.rate.toString());
+        setTxCustomRate((tx.rate * 100).toString());
       }
     } else {
       setEditingTx(null);
@@ -286,7 +286,13 @@ export default function Home() {
   const handleSaveTx = async (e: React.FormEvent) => {
     e.preventDefault();
     const method = editingTx ? "PUT" : "POST";
-    const finalRate = txRate === "custom" ? parseFloat(txCustomRate) : parseFloat(txRate);
+    let finalRate;
+    if (txRate === "custom") {
+      const cleanCustomRate = txCustomRate.replace(",", ".");
+      finalRate = parseFloat(cleanCustomRate) / 100;
+    } else {
+      finalRate = parseFloat(txRate);
+    }
 
     try {
       const response = await fetch("/api/transactions", {
@@ -1443,10 +1449,10 @@ export default function Home() {
 
               {txRate === "custom" && txDealType === "SALE" && (
                 <div>
-                  <Label htmlFor="tx-custom-rate">Enter custom decimal rate (e.g. 0.03 for 3%)</Label>
+                  <Label htmlFor="tx-custom-rate">Enter custom percentage (e.g. 2.439024 for 2.439024%)</Label>
                   <Input
                     id="tx-custom-rate"
-                    placeholder="0.03"
+                    placeholder="2.439024"
                     value={txCustomRate}
                     onChange={(e) => setTxCustomRate(e.target.value)}
                     className="mt-1"
