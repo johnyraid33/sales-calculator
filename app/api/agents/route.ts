@@ -8,15 +8,21 @@ export async function GET() {
       include: {
         transactions: true,
         payments: true,
+        extraIncomes: true,
       },
     });
 
     const summary = agents.map((agent) => {
       // Math:
-      // Due = Commissions (Sales & Rentals)
-      // Paid = Salaries + Commissions + Rent Allowances + Bonuses + Expenses - Deductions
+      // Due = Commissions (Sales & Rentals) + Extra Incomes/Claims
+      // Paid = Payments made to agent (deductions act negative)
       const totalCommissionDue = agent.transactions.reduce(
         (sum, tx) => sum + (tx.commission || 0),
+        0
+      );
+
+      const totalExtraIncome = agent.extraIncomes.reduce(
+        (sum, item) => sum + item.amount,
         0
       );
 
@@ -27,16 +33,15 @@ export async function GET() {
         return sum + p.amount;
       }, 0);
 
-      const balance = totalCommissionDue - agent.payments.filter(p => p.type === "COMMISSION" || p.type === "RENT_ALLOWANCE").reduce((sum, p) => {
-        if (p.type === "DEDUCTION") return sum - p.amount;
-        return sum + p.amount;
-      }, 0);
+      // Balance = Total commissions + Extra Incomes - Payments
+      const balance = totalCommissionDue + totalExtraIncome - totalPaid;
 
       return {
         ...agent,
         totalCommissionDue,
+        totalExtraIncome,
         totalPaid,
-        balance, // Outstanding commission/rent due
+        balance,
       };
     });
 

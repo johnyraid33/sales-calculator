@@ -17,6 +17,7 @@ model Agent {
   socialSecurity Float         @default(0)
   transactions   Transaction[]
   payments       Payment[]
+  extraIncomes   ExtraIncome[]
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 }
@@ -50,3 +51,16 @@ model Payment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model ExtraIncome {
+  id        String   @id @default(uuid())
+  date      DateTime
+  amount    Float
+  type      String   // "EXPENSE" | "SOCIAL_SECURITY" | "SALARY" | "RENT_ALLOWANCE" | "OTHER"
+  memo      String?
+  agentId   String?
+  agent     Agent?   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

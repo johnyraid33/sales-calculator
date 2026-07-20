@@ -18,6 +18,9 @@ export async function GET(
         payments: {
           orderBy: { date: "desc" },
         },
+        extraIncomes: {
+          orderBy: { date: "desc" },
+        },
       },
     });
 
@@ -30,6 +33,11 @@ export async function GET(
       0
     );
 
+    const totalExtraIncome = agent.extraIncomes.reduce(
+      (sum, item) => sum + item.amount,
+      0
+    );
+
     const totalPaid = agent.payments.reduce((sum, p) => {
       if (p.type === "DEDUCTION") {
         return sum - p.amount;
@@ -37,14 +45,12 @@ export async function GET(
       return sum + p.amount;
     }, 0);
 
-    const balance = totalCommissionDue - agent.payments.filter(p => p.type === "COMMISSION" || p.type === "RENT_ALLOWANCE").reduce((sum, p) => {
-      if (p.type === "DEDUCTION") return sum - p.amount;
-      return sum + p.amount;
-    }, 0);
+    const balance = totalCommissionDue + totalExtraIncome - totalPaid;
 
     return NextResponse.json({
       ...agent,
       totalCommissionDue,
+      totalExtraIncome,
       totalPaid,
       balance,
     });

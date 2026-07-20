@@ -23,6 +23,7 @@ import {
   ArrowUpRight,
   UserPlus,
   LogOut,
+  PlusCircle,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -51,6 +52,7 @@ interface Agent {
   rentAllowance: number;
   socialSecurity: number;
   totalCommissionDue: number;
+  totalExtraIncome: number;
   totalPaid: number;
   balance: number;
 }
@@ -81,13 +83,38 @@ interface Payment {
   agent?: { name: string };
 }
 
+interface ExtraIncome {
+  id: string;
+  date: string;
+  amount: number;
+  type: string; // "EXPENSE" | "SOCIAL_SECURITY" | "SALARY" | "RENT_ALLOWANCE" | "OTHER"
+  memo: string | null;
+  agentId: string | null;
+  agent?: { name: string };
+}
+
 export default function Home() {
   const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [extraIncomes, setExtraIncomes] = useState<ExtraIncome[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  // Extra Income Form States
+  const [extraDialogOpen, setExtraDialogOpen] = useState(false);
+  const [editingExtra, setEditingExtra] = useState<ExtraIncome | null>(null);
+  const [extraDate, setExtraDate] = useState("");
+  const [extraAmount, setExtraAmount] = useState("");
+  const [extraType, setExtraType] = useState("EXPENSE");
+  const [extraMemo, setExtraMemo] = useState("");
+  const [extraAgentId, setExtraAgentId] = useState("none");
+
+  // Extra Income Filter States
+  const [extraSearch, setExtraSearch] = useState("");
+  const [extraTypeFilter, setExtraTypeFilter] = useState("ALL");
+  const [extraAgentFilter, setExtraAgentFilter] = useState("ALL");
 
   const handleLogout = async () => {
     try {
@@ -155,19 +182,22 @@ export default function Home() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [resAgents, resTx, resPmt] = await Promise.all([
+      const [resAgents, resTx, resPmt, resExtra] = await Promise.all([
         fetch("/api/agents"),
         fetch("/api/transactions"),
         fetch("/api/payments"),
+        fetch("/api/extra-incomes"),
       ]);
 
       const dataAgents = await resAgents.json();
       const dataTx = await resTx.json();
       const dataPmt = await resPmt.json();
+      const dataExtra = await resExtra.json();
 
       setAgents(dataAgents);
       setTransactions(dataTx);
       setPayments(dataPmt);
+      setExtraIncomes(dataExtra);
 
       if (dataAgents.length > 0) {
         setPmtAgentId(dataAgents[0].id);
@@ -400,6 +430,69 @@ export default function Home() {
     }
   };
 
+  const handleOpenExtraDialog = (item: ExtraIncome | null = null) => {
+    if (item) {
+      setEditingExtra(item);
+      setExtraDate(item.date.split("T")[0]);
+      setExtraAmount(item.amount.toString());
+      setExtraType(item.type);
+      setExtraMemo(item.memo || "");
+      setExtraAgentId(item.agentId || "none");
+    } else {
+      setEditingExtra(null);
+      setExtraDate(new Date().toISOString().split("T")[0]);
+      setExtraAmount("");
+      setExtraType("EXPENSE");
+      setExtraMemo("");
+      setExtraAgentId("none");
+    }
+    setExtraDialogOpen(true);
+  };
+
+  const handleSaveExtra = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const method = editingExtra ? "PUT" : "POST";
+
+    try {
+      const response = await fetch("/api/extra-incomes", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingExtra?.id,
+          date: extraDate,
+          amount: extraAmount,
+          type: extraType,
+          memo: extraMemo || null,
+          agentId: extraAgentId === "none" ? null : extraAgentId,
+        }),
+      });
+
+      if (response.ok) {
+        setExtraDialogOpen(false);
+        fetchData();
+      } else {
+        const err = await response.json();
+        alert(err.error || "Failed to save claim");
+      }
+    } catch (error) {
+      console.error("Error saving claim:", error);
+    }
+  };
+
+  const handleDeleteExtra = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this claim?")) return;
+
+    try {
+      const response = await fetch(`/api/extra-incomes?id=${id}`, { method: "DELETE" });
+      if (response.ok) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error("Error deleting claim:", error);
+    }
+  };
+
+
   // Calculations
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -419,23 +512,25 @@ export default function Home() {
 
   const totalCommissionsDue = transactions.reduce((sum, t) => sum + t.commission, 0);
 
+  const totalExtraIncomeDue = extraIncomes.reduce((sum, item) => sum + item.amount, 0);
+
   const totalPaymentsMade = payments.reduce((sum, p) => {
     if (p.type === "DEDUCTION") return sum - Math.abs(p.amount);
     return sum + p.amount;
   }, 0);
 
-  const outstandingBalance = totalCommissionsDue - totalPaymentsMade;
+  const outstandingBalance = totalCommissionsDue + totalExtraIncomeDue - totalPaymentsMade;
 
   // Group by Month for Charts & Reconciliation
   const getMonthlyBreakdown = () => {
-    const months: { [key: string]: { sales: number; commission: number; paid: number; rentAllow: number } } = {};
+    const months: { [key: string]: { sales: number; commission: number; paid: number; rentAllow: number; extra: number } } = {};
 
     // Group transactions
     transactions.forEach((tx) => {
       const date = new Date(tx.date);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       if (!months[key]) {
-        months[key] = { sales: 0, commission: 0, paid: 0, rentAllow: 0 };
+        months[key] = { sales: 0, commission: 0, paid: 0, rentAllow: 0, extra: 0 };
       }
       if (tx.dealType === "SALE") {
         months[key].sales += tx.price;
@@ -443,12 +538,22 @@ export default function Home() {
       months[key].commission += tx.commission;
     });
 
+    // Group extra incomes
+    extraIncomes.forEach((item) => {
+      const date = new Date(item.date);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      if (!months[key]) {
+        months[key] = { sales: 0, commission: 0, paid: 0, rentAllow: 0, extra: 0 };
+      }
+      months[key].extra += item.amount;
+    });
+
     // Group payments
     payments.forEach((p) => {
       const date = new Date(p.date);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
       if (!months[key]) {
-        months[key] = { sales: 0, commission: 0, paid: 0, rentAllow: 0 };
+        months[key] = { sales: 0, commission: 0, paid: 0, rentAllow: 0, extra: 0 };
       }
       if (p.type === "RENT_ALLOWANCE") {
         months[key].rentAllow += p.amount;
@@ -474,7 +579,8 @@ export default function Home() {
           commission: months[key].commission,
           paid: months[key].paid,
           rentAllow: months[key].rentAllow,
-          variance: months[key].commission - months[key].paid,
+          extra: months[key].extra,
+          variance: (months[key].commission + months[key].extra) - months[key].paid,
         };
       });
   };
@@ -505,6 +611,22 @@ export default function Home() {
     return matchesSearch && matchesType && matchesAgent;
   });
 
+  const filteredExtra = extraIncomes.filter((item) => {
+    const matchesSearch =
+      (item.memo && item.memo.toLowerCase().includes(extraSearch.toLowerCase())) ||
+      item.type.toLowerCase().includes(extraSearch.toLowerCase());
+
+    const matchesType = extraTypeFilter === "ALL" || item.type === extraTypeFilter;
+    const matchesAgent =
+      extraAgentFilter === "ALL"
+        ? true
+        : extraAgentFilter === "none"
+        ? item.agentId === null || item.agentId === "none"
+        : item.agentId === extraAgentFilter;
+
+    return matchesSearch && matchesType && matchesAgent;
+  });
+
   return (
     <div className="flex min-h-screen bg-background font-sans text-foreground">
       {/* Sidebar navigation */}
@@ -522,6 +644,7 @@ export default function Home() {
             {[
               { id: "dashboard", label: "Dashboard", icon: HomeIcon },
               { id: "transactions", label: "Transactions", icon: Layers },
+              { id: "extraIncomes", label: "Extra Dues & Claims", icon: PlusCircle },
               { id: "payments", label: "Payments Log", icon: CreditCard },
               { id: "agents", label: "Agents Directory", icon: Users },
               { id: "reconciliation", label: "Reconciliation", icon: Calendar },
@@ -565,10 +688,13 @@ export default function Home() {
         {/* Header summary row */}
         <header className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-foreground capitalize">{activeTab}</h1>
+            <h1 className="text-3xl font-bold text-foreground capitalize">
+              {activeTab === "extraIncomes" ? "Extra Dues & Claims" : activeTab}
+            </h1>
             <p className="text-muted-foreground text-sm mt-1">
               {activeTab === "dashboard" && "Sales volumes, commissions, and agent payment breakdown"}
               {activeTab === "transactions" && "Log of client property transactions"}
+              {activeTab === "extraIncomes" && "Log extra agent income, expenses, and social security claims"}
               {activeTab === "payments" && "Records of payouts, allowances, and social security"}
               {activeTab === "agents" && "Configure sales representatives and base remuneration settings"}
               {activeTab === "reconciliation" && "Month-by-month commission dues and payouts balance sheet"}
@@ -591,6 +717,12 @@ export default function Home() {
               </Button>
             )}
 
+            {activeTab === "extraIncomes" && (
+              <Button size="sm" onClick={() => handleOpenExtraDialog()}>
+                <Plus className="w-4 h-4 mr-2" /> Log Claim
+              </Button>
+            )}
+
             {activeTab === "payments" && (
               <Button size="sm" onClick={() => handleOpenPmtDialog()}>
                 <Plus className="w-4 h-4 mr-2" /> Log Payment
@@ -607,7 +739,7 @@ export default function Home() {
 
         {/* Global Summary Cards - only on Dashboard and Reconciliation */}
         {(activeTab === "dashboard" || activeTab === "reconciliation") && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Sales Volume</CardTitle>
@@ -632,12 +764,23 @@ export default function Home() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Extra Income / Claims</CardTitle>
+                <PlusCircle className="w-4 h-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatCurrency(totalExtraIncomeDue)}</div>
+                <p className="text-xs text-muted-foreground mt-1">Expenses, social security, etc.</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Total Receipts Paid</CardTitle>
                 <CreditCard className="w-4 h-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(totalPaymentsMade)}</div>
-                <p className="text-xs text-muted-foreground mt-1">Including base rent allowances</p>
+                <p className="text-xs text-muted-foreground mt-1">Deductions subtracted</p>
               </CardContent>
             </Card>
 
@@ -786,10 +929,10 @@ export default function Home() {
                     </CardHeader>
                     <CardContent>
                       <Table>
-                        <TableHeader>
-                          <TableRow>
+                        <TableHeader>                           <TableRow>
                             <TableHead>Representative</TableHead>
                             <TableHead className="text-right">Commission Due</TableHead>
+                            <TableHead className="text-right">Extra Dues</TableHead>
                             <TableHead className="text-right">Paid to Agent</TableHead>
                             <TableHead className="text-right">Net Balance</TableHead>
                           </TableRow>
@@ -799,6 +942,7 @@ export default function Home() {
                             <TableRow key={agent.id}>
                               <TableCell className="font-medium">{agent.name}</TableCell>
                               <TableCell className="text-right">{formatCurrency(agent.totalCommissionDue)}</TableCell>
+                              <TableCell className="text-right">{formatCurrency(agent.totalExtraIncome)}</TableCell>
                               <TableCell className="text-right">{formatCurrency(agent.totalPaid)}</TableCell>
                               <TableCell className="text-right">
                                 <span className={`font-semibold ${agent.balance >= 0 ? "text-amber-600 dark:text-amber-500" : "text-emerald-600 dark:text-emerald-500"}`}>
@@ -962,6 +1106,133 @@ export default function Home() {
                           </TableCell>
                         </TableRow>
                       ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
+            )}
+
+            {/* EXTRA INCOMES / CLAIMS TAB */}
+            {activeTab === "extraIncomes" && (
+              <Card className="p-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                  {/* Search and Filters */}
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative w-72">
+                      <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                      <Input
+                        placeholder="Search memo / comments..."
+                        value={extraSearch}
+                        onChange={(e) => setExtraSearch(e.target.value)}
+                        className="pl-9 bg-background border-input text-foreground placeholder-muted-foreground focus-visible:ring-ring"
+                      />
+                    </div>
+
+                    <Select value={extraTypeFilter} onValueChange={setExtraTypeFilter}>
+                      <SelectTrigger className="w-40 bg-background border-input text-foreground">
+                        <SelectValue placeholder="Claim Type" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                        <SelectItem value="ALL">All Types</SelectItem>
+                        <SelectItem value="EXPENSE">Expense Reimbursement</SelectItem>
+                        <SelectItem value="SOCIAL_SECURITY">Social Security</SelectItem>
+                        <SelectItem value="SALARY">Salary Claim</SelectItem>
+                        <SelectItem value="RENT_ALLOWANCE">Rent Allowance</SelectItem>
+                        <SelectItem value="OTHER">Other Claim</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={extraAgentFilter} onValueChange={setExtraAgentFilter}>
+                      <SelectTrigger className="w-40 bg-background border-input text-foreground">
+                        <SelectValue placeholder="Agent / Direct" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                        <SelectItem value="ALL">All Agents / Direct</SelectItem>
+                        <SelectItem value="none">Direct (No Agent)</SelectItem>
+                        {agents.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <span className="text-xs text-muted-foreground font-medium">
+                    Showing {filteredExtra.length} of {extraIncomes.length} entries
+                  </span>
+                </div>
+
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Agent / Direct</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Memo / Description</TableHead>
+                        <TableHead className="text-right">Amount</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredExtra.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            No extra dues or claims logged.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredExtra.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              {new Date(item.date).toLocaleDateString("en-GB")}
+                            </TableCell>
+                            <TableCell className="font-semibold">
+                              {item.agent?.name || "Direct (Company)"}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                className={
+                                  item.type === "EXPENSE"
+                                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-500"
+                                    : item.type === "SOCIAL_SECURITY"
+                                    ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                                    : item.type === "SALARY"
+                                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                    : item.type === "RENT_ALLOWANCE"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                    : "bg-muted text-muted-foreground"
+                                }
+                              >
+                                {item.type.replace("_", " ")}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="italic max-w-sm truncate">
+                              {item.memo || "—"}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-amber-600 dark:text-amber-500">
+                              +{formatCurrency(item.amount)}
+                            </TableCell>
+                            <TableCell className="text-right space-x-1.5">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleOpenExtraDialog(item)}
+                                className="w-8 h-8"
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteExtra(item.id)}
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive w-8 h-8"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
                     </TableBody>
                   </Table>
                 </div>
@@ -1168,6 +1439,7 @@ export default function Home() {
                       <TableRow>
                         <TableHead>Month</TableHead>
                         <TableHead className="text-right">Commissions Due</TableHead>
+                        <TableHead className="text-right">Extra Dues</TableHead>
                         <TableHead className="text-right">Receipts Paid</TableHead>
                         <TableHead className="text-right">Variance</TableHead>
                         <TableHead className="text-center">Status</TableHead>
@@ -1183,6 +1455,7 @@ export default function Home() {
                           <TableRow key={data.monthKey}>
                             <TableCell className="font-semibold">{data.label}</TableCell>
                             <TableCell className="text-right font-medium">{formatCurrency(data.commission)}</TableCell>
+                            <TableCell className="text-right font-medium text-amber-600 dark:text-amber-500">+{formatCurrency(data.extra)}</TableCell>
                             <TableCell className="text-right">{formatCurrency(data.paid)}</TableCell>
                             <TableCell className={`text-right font-bold ${isUnderpaid ? "text-amber-600 dark:text-amber-500" : isOverpaid ? "text-emerald-600 dark:text-emerald-500" : "text-muted-foreground"}`}>
                               {isUnderpaid ? "+" : ""}{formatCurrency(data.variance)}
@@ -1575,6 +1848,99 @@ export default function Home() {
               </Button>
               <Button type="submit">
                 {editingPmt ? "Save Changes" : "Record Payment"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Extra Income / Claim Dialog */}
+      <Dialog open={extraDialogOpen} onOpenChange={setExtraDialogOpen}>
+        <DialogContent className="max-w-md">
+          <form onSubmit={handleSaveExtra} className="space-y-4">
+            <DialogHeader>
+              <DialogTitle>{editingExtra ? "Edit Extra Due / Claim" : "Log Extra Due / Claim"}</DialogTitle>
+              <DialogDescription>Record a custom expense reimbursement, social security, or other due to be factored into receivables.</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="extra-agent">Agent / Direct</Label>
+                  <Select value={extraAgentId} onValueChange={setExtraAgentId}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select Agent / Direct" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Direct Deal (No Agent)</SelectItem>
+                      {agents.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="extra-date">Date Logged</Label>
+                  <Input
+                    id="extra-date"
+                    type="date"
+                    value={extraDate}
+                    onChange={(e) => setExtraDate(e.target.value)}
+                    className="mt-1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="extra-amount">Amount (€)</Label>
+                  <Input
+                    id="extra-amount"
+                    type="number"
+                    value={extraAmount}
+                    onChange={(e) => setExtraAmount(e.target.value)}
+                    className="mt-1"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="extra-type">Claim Type</Label>
+                  <Select value={extraType} onValueChange={setExtraType}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue placeholder="Select Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="EXPENSE">Expense Reimbursement</SelectItem>
+                      <SelectItem value="SOCIAL_SECURITY">Social Security</SelectItem>
+                      <SelectItem value="SALARY">Salary Claim</SelectItem>
+                      <SelectItem value="RENT_ALLOWANCE">Rent Allowance</SelectItem>
+                      <SelectItem value="OTHER">Other Claim</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="extra-memo">Memo / Description</Label>
+                <Input
+                  id="extra-memo"
+                  placeholder="e.g. Travel tickets reimbursement"
+                  value={extraMemo}
+                  onChange={(e) => setExtraMemo(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setExtraDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">
+                {editingExtra ? "Save Changes" : "Log Claim"}
               </Button>
             </DialogFooter>
           </form>
