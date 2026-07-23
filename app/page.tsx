@@ -899,13 +899,14 @@ export default function Home() {
                                 {/* X Label */}
                                 <text
                                   x={xBase}
-                                  y="225"
+                                  y="222"
                                   fill="currentColor"
                                   className="fill-muted-foreground"
                                   fontSize="9"
-                                  textAnchor="middle"
+                                  textAnchor="end"
+                                  transform={`rotate(-35, ${xBase}, 222)`}
                                 >
-                                  {data.label}
+                                  {data.label.replace(/ (\d{2})(\d{2})/, " '$2")}
                                 </text>
 
                                 {/* Hover tooltip values */}
