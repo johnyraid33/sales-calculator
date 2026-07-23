@@ -39,9 +39,6 @@ export async function GET(
     );
 
     const totalPaid = agent.payments.reduce((sum, p) => {
-      if (p.type === "DEDUCTION") {
-        return sum - p.amount;
-      }
       return sum + p.amount;
     }, 0);
 
@@ -70,15 +67,21 @@ export async function PUT(
     const body = await request.json();
     const { name, email, phone, baseSalary, rentAllowance, socialSecurity } = body;
 
+    const parseVal = (v: any) => {
+      if (v === undefined || v === null || v === "") return 0;
+      const str = String(v).replace(",", ".");
+      return parseFloat(str) || 0;
+    };
+
     const agent = await prisma.agent.update({
       where: { id },
       data: {
         name,
         email,
         phone,
-        baseSalary: parseFloat(baseSalary) || 0,
-        rentAllowance: parseFloat(rentAllowance) || 0,
-        socialSecurity: parseFloat(socialSecurity) || 0,
+        baseSalary: parseVal(baseSalary),
+        rentAllowance: parseVal(rentAllowance),
+        socialSecurity: parseVal(socialSecurity),
       },
     });
 

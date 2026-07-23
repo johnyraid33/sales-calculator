@@ -51,8 +51,13 @@ export async function POST(request: Request) {
     }
 
     // Validate rate
-    const parsedPrice = parseFloat(price);
-    const parsedRate = parseFloat(rate);
+    const parseVal = (v: any) => {
+      if (v === undefined || v === null || v === "") return 0;
+      const str = String(v).replace(",", ".");
+      return parseFloat(str) || 0;
+    };
+    const parsedPrice = parseVal(price);
+    const parsedRate = parseVal(rate);
     
     // Automatically calculate commission
     const calculatedCommission = parsedPrice * parsedRate;
@@ -102,8 +107,13 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Transaction ID is required" }, { status: 400 });
     }
 
-    const parsedPrice = parseFloat(price);
-    const parsedRate = parseFloat(rate);
+    const parseVal = (v: any) => {
+      if (v === undefined || v === null || v === "") return 0;
+      const str = String(v).replace(",", ".");
+      return parseFloat(str) || 0;
+    };
+    const parsedPrice = parseVal(price);
+    const parsedRate = parseVal(rate);
     const calculatedCommission = parsedPrice * parsedRate;
 
     const transaction = await prisma.transaction.update({

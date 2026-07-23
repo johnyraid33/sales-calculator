@@ -43,10 +43,16 @@ export async function POST(request: Request) {
       );
     }
 
+    const parseVal = (v: any) => {
+      if (v === undefined || v === null || v === "") return 0;
+      const str = String(v).replace(",", ".");
+      return parseFloat(str) || 0;
+    };
+
     const item = await prisma.extraIncome.create({
       data: {
         date: date ? new Date(date) : new Date(),
-        amount: parseFloat(amount),
+        amount: parseVal(amount),
         type,
         memo: memo || null,
         agentId: agentId === "none" || !agentId ? null : agentId,
@@ -70,11 +76,17 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "ID is required" }, { status: 400 });
     }
 
+    const parseVal = (v: any) => {
+      if (v === undefined || v === null || v === "") return undefined;
+      const str = String(v).replace(",", ".");
+      return parseFloat(str) || 0;
+    };
+
     const item = await prisma.extraIncome.update({
       where: { id },
       data: {
         date: date ? new Date(date) : undefined,
-        amount: amount ? parseFloat(amount) : undefined,
+        amount: amount !== undefined ? parseVal(amount) : undefined,
         type,
         memo,
         agentId: agentId === "none" || !agentId ? null : agentId,

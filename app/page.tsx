@@ -317,7 +317,9 @@ export default function Home() {
     e.preventDefault();
     const method = editingTx ? "PUT" : "POST";
     let finalRate;
-    if (txRate === "custom") {
+    if (txDealType === "RENT") {
+      finalRate = 0.50;
+    } else if (txRate === "custom") {
       const cleanCustomRate = txCustomRate.replace(",", ".");
       finalRate = parseFloat(cleanCustomRate) / 100;
     } else {
@@ -498,12 +500,14 @@ export default function Home() {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "EUR",
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
     }).format(val);
   };
 
   const formatPct = (val: number) => {
-    return `${(val * 100).toFixed(1)}%`;
+    const pctVal = Number((val * 100).toFixed(6));
+    return `${pctVal}%`;
   };
 
   const totalSalesVolume = transactions
@@ -515,7 +519,6 @@ export default function Home() {
   const totalExtraIncomeDue = extraIncomes.reduce((sum, item) => sum + item.amount, 0);
 
   const totalPaymentsMade = payments.reduce((sum, p) => {
-    if (p.type === "DEDUCTION") return sum - Math.abs(p.amount);
     return sum + p.amount;
   }, 0);
 
@@ -558,9 +561,8 @@ export default function Home() {
       if (p.type === "RENT_ALLOWANCE") {
         months[key].rentAllow += p.amount;
       }
-      // Deductions act negative
-      const amountSign = p.type === "DEDUCTION" ? -p.amount : p.amount;
-      months[key].paid += amountSign;
+      // Both payouts and deductions reduce the remaining balance (variance)
+      months[key].paid += p.amount;
     });
 
     // Sort keys chronologically
@@ -780,7 +782,7 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{formatCurrency(totalPaymentsMade)}</div>
-                <p className="text-xs text-muted-foreground mt-1">Deductions subtracted</p>
+                <p className="text-xs text-muted-foreground mt-1">Deductions factored in</p>
               </CardContent>
             </Card>
 
