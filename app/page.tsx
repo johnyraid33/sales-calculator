@@ -1043,6 +1043,7 @@ export default function Home() {
                         <TableHead>Date</TableHead>
                         <TableHead>Agent</TableHead>
                         <TableHead>Client / Property</TableHead>
+                        <TableHead className="text-center">Type</TableHead>
                         <TableHead className="text-right">Price</TableHead>
                         <TableHead className="text-center">Rate</TableHead>
                         <TableHead className="text-right">Commission</TableHead>
@@ -1060,21 +1061,21 @@ export default function Home() {
                             {tx.agent?.name || "Direct"}
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium">{tx.client}</span>
-                              {tx.dealType === "SALE" ? (
-                                <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/10 text-[9px] py-0 px-1.5 font-semibold">
-                                  Sale
-                                </Badge>
-                              ) : (
-                                <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-500/10 text-[9px] py-0 px-1.5 font-semibold">
-                                  Rent
-                                </Badge>
-                              )}
-                            </div>
+                            <p className="font-medium">{tx.client}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               {tx.project ? `${tx.project}` : ""} {tx.type ? `(${tx.type})` : ""}
                             </p>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {tx.dealType === "SALE" ? (
+                              <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-500/10 text-[10px] py-0.5 px-2 font-semibold">
+                                Sale
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-500/10 text-[10px] py-0.5 px-2 font-semibold">
+                                Rent
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="text-right font-semibold">
                             {formatCurrency(tx.price)}
