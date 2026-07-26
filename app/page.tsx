@@ -630,19 +630,19 @@ export default function Home() {
   });
 
   return (
-    <div className="flex min-h-screen bg-background font-sans text-foreground">
+    <div className="flex min-h-screen bg-slate-50/50 dark:bg-background font-sans text-foreground">
       {/* Sidebar navigation */}
-      <aside className="w-64 border-r bg-card p-6 flex flex-col justify-between">
-        <div className="space-y-6">
-          <div className="flex items-center gap-3 px-2 py-1">
-            <div className="rounded-lg bg-primary p-2 text-primary-foreground font-bold">AN</div>
+      <aside className="w-56 border-r border-slate-200 dark:border-border bg-white dark:bg-card p-4 flex flex-col justify-between">
+        <div className="space-y-5">
+          <div className="flex items-center gap-2.5 px-1 py-0.5">
+            <div className="rounded bg-[#0051c3] p-1.5 text-white font-bold text-xs w-7 h-7 flex items-center justify-center">AN</div>
             <div>
-              <h2 className="font-semibold text-lg leading-tight text-foreground">Ark Noah</h2>
-              <span className="text-xs text-muted-foreground">Sales & Rent Engine</span>
+              <h2 className="font-semibold text-sm leading-tight text-slate-800 dark:text-foreground">Ark Noah</h2>
+              <span className="text-[10px] text-muted-foreground font-medium">Sales & Rent Engine</span>
             </div>
           </div>
 
-          <nav className="space-y-2">
+          <nav className="space-y-1">
             {[
               { id: "dashboard", label: "Dashboard", icon: HomeIcon },
               { id: "transactions", label: "Transactions", icon: Layers },
@@ -652,17 +652,18 @@ export default function Home() {
               { id: "reconciliation", label: "Reconciliation", icon: Calendar },
             ].map((tab) => {
               const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
-                    activeTab === tab.id
-                      ? "bg-accent text-accent-foreground border-l-2 border-primary pl-2.5"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded text-xs font-medium transition-all text-left ${
+                    isActive
+                      ? "bg-[#f2f6fc] text-[#0051c3] dark:bg-primary/10 dark:text-primary-foreground font-semibold"
+                      : "text-slate-600 dark:text-muted-foreground hover:bg-slate-50 dark:hover:bg-accent/40 hover:text-slate-900 dark:hover:text-foreground"
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? "text-[#0051c3] dark:text-primary-foreground" : "text-slate-400 dark:text-muted-foreground"}`} />
                   {tab.label}
                 </button>
               );
@@ -670,30 +671,47 @@ export default function Home() {
           </nav>
         </div>
 
-        <div className="pt-4 border-t space-y-4">
+        <div className="pt-3 border-t border-slate-200 dark:border-border space-y-3">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-all text-left"
+            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-left"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-3.5 h-3.5" />
             Sign Out
           </button>
-          <div className="text-[10px] text-muted-foreground">
+          <div className="text-[9px] text-muted-foreground/80 px-1">
             <p>© 2026 Ark Noah Holdings</p>
-            <p className="mt-1">Version 1.0.0 (Prisma SQLite)</p>
+            <p className="mt-0.5">Version 1.0.0 (Prisma SQLite)</p>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 p-8 space-y-6 overflow-y-auto max-w-7xl mx-auto w-full">
+      <main className="flex-1 p-6 space-y-5 overflow-y-auto w-full bg-slate-50/50 dark:bg-background">
         {/* Header summary row */}
-        <header className="flex justify-between items-center">
+        <header className="flex justify-between items-end border-b border-slate-100 dark:border-border pb-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground capitalize">
-              {activeTab === "extraIncomes" ? "Extra Dues & Claims" : activeTab}
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground/80 font-medium uppercase tracking-wider mb-1">
+              <span>Ark Noah</span>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-500 font-semibold">
+                {activeTab === "dashboard" && "Dashboard"}
+                {activeTab === "transactions" && "Transactions"}
+                {activeTab === "extraIncomes" && "Extra Dues & Claims"}
+                {activeTab === "payments" && "Payments Log"}
+                {activeTab === "agents" && "Agents Directory"}
+                {activeTab === "reconciliation" && "Reconciliation"}
+              </span>
+            </div>
+            <h1 className="text-lg font-semibold tracking-tight text-slate-800 dark:text-foreground">
+              {activeTab === "dashboard" && "Dashboard Overview"}
+              {activeTab === "transactions" && "Transactions Log"}
+              {activeTab === "extraIncomes" && "Extra Dues & Claims"}
+              {activeTab === "payments" && "Payments Log"}
+              {activeTab === "agents" && "Agents Directory"}
+              {activeTab === "reconciliation" && "Monthly Reconciliation"}
             </h1>
-            <p className="text-muted-foreground text-sm mt-1">
+            <p className="text-muted-foreground text-xs mt-0.5 font-medium">
               {activeTab === "dashboard" && "Sales volumes, commissions, and agent payment breakdown"}
               {activeTab === "transactions" && "Log of client property transactions"}
               {activeTab === "extraIncomes" && "Log extra agent income, expenses, and social security claims"}
@@ -708,32 +726,33 @@ export default function Home() {
               variant="outline"
               size="sm"
               onClick={fetchData}
+              className="h-8 text-xs font-medium bg-white dark:bg-card border-slate-200 dark:border-border text-slate-700 dark:text-foreground hover:bg-slate-50 px-3 py-1 rounded"
             >
-              <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+              <RefreshCw className={`w-3 h-3 mr-1.5 ${isLoading ? "animate-spin" : ""}`} />
               Reload
             </Button>
 
             {activeTab === "transactions" && (
-              <Button size="sm" onClick={() => handleOpenTxDialog()}>
-                <Plus className="w-4 h-4 mr-2" /> New Deal
+              <Button size="sm" onClick={() => handleOpenTxDialog()} className="h-8 text-xs font-medium bg-[#0051c3] hover:bg-[#0043a4] text-white px-3 py-1 rounded">
+                <Plus className="w-3.5 h-3.5 mr-1" /> New Deal
               </Button>
             )}
 
             {activeTab === "extraIncomes" && (
-              <Button size="sm" onClick={() => handleOpenExtraDialog()}>
-                <Plus className="w-4 h-4 mr-2" /> Log Claim
+              <Button size="sm" onClick={() => handleOpenExtraDialog()} className="h-8 text-xs font-medium bg-[#0051c3] hover:bg-[#0043a4] text-white px-3 py-1 rounded">
+                <Plus className="w-3.5 h-3.5 mr-1" /> Log Claim
               </Button>
             )}
 
             {activeTab === "payments" && (
-              <Button size="sm" onClick={() => handleOpenPmtDialog()}>
-                <Plus className="w-4 h-4 mr-2" /> Log Payment
+              <Button size="sm" onClick={() => handleOpenPmtDialog()} className="h-8 text-xs font-medium bg-[#0051c3] hover:bg-[#0043a4] text-white px-3 py-1 rounded">
+                <Plus className="w-3.5 h-3.5 mr-1" /> Log Payment
               </Button>
             )}
 
             {activeTab === "agents" && (
-              <Button size="sm" onClick={() => handleOpenAgentDialog()}>
-                <UserPlus className="w-4 h-4 mr-2" /> Add Agent
+              <Button size="sm" onClick={() => handleOpenAgentDialog()} className="h-8 text-xs font-medium bg-[#0051c3] hover:bg-[#0043a4] text-white px-3 py-1 rounded">
+                <UserPlus className="w-3.5 h-3.5 mr-1" /> Add Agent
               </Button>
             )}
           </div>
@@ -741,63 +760,40 @@ export default function Home() {
 
         {/* Global Summary Cards - only on Dashboard and Reconciliation */}
         {(activeTab === "dashboard" || activeTab === "reconciliation") && (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Sales Volume</CardTitle>
-                <TrendingUp className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalSalesVolume)}</div>
-                <p className="text-xs text-muted-foreground mt-1">Excludes rentals</p>
-              </CardContent>
-            </Card>
+          <div className="rounded border border-slate-200 dark:border-border bg-white dark:bg-card p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-border shadow-sm">
+            <div className="flex-1 px-4 py-1 md:first:pl-2">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider block mb-0.5">Total Sales Volume</span>
+              <div className="text-base font-semibold text-slate-800 dark:text-foreground">{formatCurrency(totalSalesVolume)}</div>
+              <p className="text-[9px] text-muted-foreground/80 mt-0.5">Excludes rentals</p>
+            </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Commissions Due</CardTitle>
-                <Percent className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalCommissionsDue)}</div>
-                <p className="text-xs text-muted-foreground mt-1">Sales + Rental commissions</p>
-              </CardContent>
-            </Card>
+            <div className="flex-1 px-4 py-1">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider block mb-0.5">Commissions Due</span>
+              <div className="text-base font-semibold text-slate-800 dark:text-foreground">{formatCurrency(totalCommissionsDue)}</div>
+              <p className="text-[9px] text-muted-foreground/80 mt-0.5">Sales + Rental commissions</p>
+            </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Extra Income / Claims</CardTitle>
-                <PlusCircle className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalExtraIncomeDue)}</div>
-                <p className="text-xs text-muted-foreground mt-1">Expenses, social security, etc.</p>
-              </CardContent>
-            </Card>
+            <div className="flex-1 px-4 py-1">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider block mb-0.5">Extra Income / Claims</span>
+              <div className="text-base font-semibold text-slate-800 dark:text-foreground">{formatCurrency(totalExtraIncomeDue)}</div>
+              <p className="text-[9px] text-muted-foreground/80 mt-0.5">Expenses, social security, etc.</p>
+            </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Total Receipts Paid</CardTitle>
-                <CreditCard className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalPaymentsMade)}</div>
-                <p className="text-xs text-muted-foreground mt-1">Deductions factored in</p>
-              </CardContent>
-            </Card>
+            <div className="flex-1 px-4 py-1">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider block mb-0.5">Total Receipts Paid</span>
+              <div className="text-base font-semibold text-slate-800 dark:text-foreground">{formatCurrency(totalPaymentsMade)}</div>
+              <p className="text-[9px] text-muted-foreground/80 mt-0.5">Deductions factored in</p>
+            </div>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Variance Balance</CardTitle>
-                <DollarSign className="w-4 h-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(outstandingBalance)}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {outstandingBalance >= 0 ? "Outstanding due to agent" : "Agent overpaid"}
-                </p>
-              </CardContent>
-            </Card>
+            <div className="flex-1 px-4 py-1 md:last:pr-2">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider block mb-0.5">Variance Balance</span>
+              <div className={`text-base font-bold ${outstandingBalance >= 0 ? "text-[#0051c3] dark:text-blue-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                {formatCurrency(outstandingBalance)}
+              </div>
+              <p className="text-[9px] text-muted-foreground/80 mt-0.5">
+                {outstandingBalance >= 0 ? "Outstanding due to agent" : "Agent overpaid"}
+              </p>
+            </div>
           </div>
         )}
 
@@ -996,22 +992,22 @@ export default function Home() {
               <Card className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                   {/* Search and Filters */}
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative w-72">
-                      <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative w-64">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-[9px] text-muted-foreground" />
                       <Input
                         placeholder="Search client, project, partner..."
                         value={txSearch}
                         onChange={(e) => setTxSearch(e.target.value)}
-                        className="pl-9 bg-background border-input text-foreground placeholder-muted-foreground focus-visible:ring-ring"
+                        className="h-8 pl-8 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground placeholder-muted-foreground/80 focus-visible:ring-ring text-xs rounded-sm"
                       />
                     </div>
 
                     <Select value={txTypeFilter} onValueChange={setTxTypeFilter}>
-                      <SelectTrigger className="w-36 bg-background border-input text-foreground">
+                      <SelectTrigger className="h-8 w-32 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground text-xs rounded-sm py-1 px-2.5">
                         <SelectValue placeholder="Deal Type" />
                       </SelectTrigger>
-                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                      <SelectContent className="bg-popover border-border text-popover-foreground text-xs">
                         <SelectItem value="ALL">All Deals</SelectItem>
                         <SelectItem value="SALE">Sales only</SelectItem>
                         <SelectItem value="RENT">Rentals only</SelectItem>
@@ -1019,10 +1015,10 @@ export default function Home() {
                     </Select>
 
                     <Select value={txAgentFilter} onValueChange={setTxAgentFilter}>
-                      <SelectTrigger className="w-40 bg-background border-input text-foreground">
+                      <SelectTrigger className="h-8 w-36 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground text-xs rounded-sm py-1 px-2.5">
                         <SelectValue placeholder="Agent" />
                       </SelectTrigger>
-                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                      <SelectContent className="bg-popover border-border text-popover-foreground text-xs">
                         <SelectItem value="ALL">All Agents</SelectItem>
                         {agents.map((a) => (
                           <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -1031,7 +1027,7 @@ export default function Home() {
                     </Select>
                   </div>
 
-                  <span className="text-xs text-muted-foreground font-medium">
+                  <span className="text-[11px] text-muted-foreground font-medium">
                     Showing {filteredTx.length} of {transactions.length} entries
                   </span>
                 </div>
@@ -1132,22 +1128,22 @@ export default function Home() {
               <Card className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                   {/* Search and Filters */}
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative w-72">
-                      <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative w-64">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-[9px] text-muted-foreground" />
                       <Input
                         placeholder="Search memo / comments..."
                         value={extraSearch}
                         onChange={(e) => setExtraSearch(e.target.value)}
-                        className="pl-9 bg-background border-input text-foreground placeholder-muted-foreground focus-visible:ring-ring"
+                        className="h-8 pl-8 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground placeholder-muted-foreground/80 focus-visible:ring-ring text-xs rounded-sm"
                       />
                     </div>
 
                     <Select value={extraTypeFilter} onValueChange={setExtraTypeFilter}>
-                      <SelectTrigger className="w-40 bg-background border-input text-foreground">
+                      <SelectTrigger className="h-8 w-36 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground text-xs rounded-sm py-1 px-2.5">
                         <SelectValue placeholder="Claim Type" />
                       </SelectTrigger>
-                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                      <SelectContent className="bg-popover border-border text-popover-foreground text-xs">
                         <SelectItem value="ALL">All Types</SelectItem>
                         <SelectItem value="EXPENSE">Expense Reimbursement</SelectItem>
                         <SelectItem value="SOCIAL_SECURITY">Social Security</SelectItem>
@@ -1158,10 +1154,10 @@ export default function Home() {
                     </Select>
 
                     <Select value={extraAgentFilter} onValueChange={setExtraAgentFilter}>
-                      <SelectTrigger className="w-40 bg-background border-input text-foreground">
+                      <SelectTrigger className="h-8 w-38 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground text-xs rounded-sm py-1 px-2.5">
                         <SelectValue placeholder="Agent / Direct" />
                       </SelectTrigger>
-                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                      <SelectContent className="bg-popover border-border text-popover-foreground text-xs">
                         <SelectItem value="ALL">All Agents / Direct</SelectItem>
                         <SelectItem value="none">Direct (No Agent)</SelectItem>
                         {agents.map((a) => (
@@ -1171,7 +1167,7 @@ export default function Home() {
                     </Select>
                   </div>
 
-                  <span className="text-xs text-muted-foreground font-medium">
+                  <span className="text-[11px] text-muted-foreground font-medium">
                     Showing {filteredExtra.length} of {extraIncomes.length} entries
                   </span>
                 </div>
@@ -1259,22 +1255,22 @@ export default function Home() {
               <Card className="p-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                   {/* Search and Filters */}
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative w-72">
-                      <Search className="w-4 h-4 absolute left-3 top-3 text-muted-foreground" />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="relative w-64">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-[9px] text-muted-foreground" />
                       <Input
                         placeholder="Search memo / comments..."
                         value={pmtSearch}
                         onChange={(e) => setPmtSearch(e.target.value)}
-                        className="pl-9 bg-background border-input text-foreground placeholder-muted-foreground focus-visible:ring-ring"
+                        className="h-8 pl-8 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground placeholder-muted-foreground/80 focus-visible:ring-ring text-xs rounded-sm"
                       />
                     </div>
 
                     <Select value={pmtTypeFilter} onValueChange={setPmtTypeFilter}>
-                      <SelectTrigger className="w-40 bg-background border-input text-foreground">
+                      <SelectTrigger className="h-8 w-36 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground text-xs rounded-sm py-1 px-2.5">
                         <SelectValue placeholder="Payment Type" />
                       </SelectTrigger>
-                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                      <SelectContent className="bg-popover border-border text-popover-foreground text-xs">
                         <SelectItem value="ALL">All Types</SelectItem>
                         <SelectItem value="COMMISSION">Commission Payout</SelectItem>
                         <SelectItem value="SALARY">Base Salary</SelectItem>
@@ -1286,10 +1282,10 @@ export default function Home() {
                     </Select>
 
                     <Select value={pmtAgentFilter} onValueChange={setPmtAgentFilter}>
-                      <SelectTrigger className="w-40 bg-background border-input text-foreground">
+                      <SelectTrigger className="h-8 w-36 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground text-xs rounded-sm py-1 px-2.5">
                         <SelectValue placeholder="Agent" />
                       </SelectTrigger>
-                      <SelectContent className="bg-popover border-border text-popover-foreground">
+                      <SelectContent className="bg-popover border-border text-popover-foreground text-xs">
                         <SelectItem value="ALL">All Agents</SelectItem>
                         {agents.map((a) => (
                           <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -1298,7 +1294,7 @@ export default function Home() {
                     </Select>
                   </div>
 
-                  <span className="text-xs text-muted-foreground font-medium">
+                  <span className="text-[11px] text-muted-foreground font-medium">
                     Showing {filteredPmt.length} of {payments.length} entries
                   </span>
                 </div>
