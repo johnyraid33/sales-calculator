@@ -964,8 +964,8 @@ export default function Home() {
                               </div>
                             </div>
 
-                            {/* HTML X-Axis Month Labels */}
-                            <div className="relative w-full h-9 pl-16 pr-2">
+                            {/* HTML X-Axis Month Labels (Horizontal, Crisp & Perfectly Centered) */}
+                            <div className="relative w-full h-6 pl-16 pr-2">
                               <div className="relative w-full h-full">
                                 {monthlyData.map((data, index) => {
                                   const totalBars = monthlyData.length;
@@ -974,8 +974,8 @@ export default function Home() {
                                   return (
                                     <div
                                       key={data.monthKey}
-                                      className="absolute text-[10px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap -rotate-45 origin-top-left transition-colors hover:text-slate-900 dark:hover:text-foreground"
-                                      style={{ left: `${leftPct}%`, top: "6px" }}
+                                      className="absolute -translate-x-1/2 text-[10px] font-mono font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap text-center transition-colors hover:text-slate-900 dark:hover:text-foreground"
+                                      style={{ left: `${leftPct}%`, top: "2px" }}
                                     >
                                       {shortLabel}
                                     </div>
