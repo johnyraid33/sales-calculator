@@ -854,112 +854,140 @@ export default function Home() {
               <div className="space-y-6">
                 {/* SVG Chart */}
                 <Card className="p-6">
-                  <div className="flex justify-between items-center mb-6">
-                    <div>
-                      <CardTitle className="text-lg">Monthly Commission Dues vs Receipts Paid</CardTitle>
-                      <CardDescription>Performance and payment variance over time</CardDescription>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-3.5 h-3.5 bg-[var(--chart-1)] rounded"></span>
-                        <span>Commission Due</span>
+                  {(() => {
+                    const maxVal = Math.max(
+                      ...monthlyData.map((d) => Math.max(d.commission, d.paid, 5000))
+                    );
+
+                    return (
+                      <div className="w-full space-y-4">
+                        {/* Header & Legend */}
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                          <div>
+                            <CardTitle className="text-base font-semibold">Monthly Commission Dues vs Receipts Paid</CardTitle>
+                            <CardDescription className="text-xs">Performance and payment variance over time</CardDescription>
+                          </div>
+                          <div className="flex items-center gap-4 text-xs font-medium text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-3 h-3 bg-[#0051c3] rounded-sm"></span>
+                              <span>Commission Due</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-3 h-3 bg-cyan-500 rounded-sm"></span>
+                              <span>Receipts Paid</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Chart Area */}
+                        {monthlyData.length === 0 ? (
+                          <div className="h-64 flex items-center justify-center text-muted-foreground text-xs">
+                            No chart data available
+                          </div>
+                        ) : (
+                          <div className="w-full space-y-3">
+                            <div className="flex h-52 w-full gap-3 items-stretch">
+                              {/* Y-Axis Value Labels */}
+                              <div className="w-14 flex flex-col justify-between text-[10px] text-muted-foreground font-mono text-right pr-2 py-0.5 select-none shrink-0">
+                                <span>{formatCurrency(maxVal)}</span>
+                                <span>{formatCurrency(maxVal * 0.75)}</span>
+                                <span>{formatCurrency(maxVal * 0.5)}</span>
+                                <span>{formatCurrency(maxVal * 0.25)}</span>
+                                <span>€0</span>
+                              </div>
+
+                              {/* SVG Canvas */}
+                              <div className="flex-1 h-full relative">
+                                <svg className="w-full h-full" viewBox="0 0 800 200" preserveAspectRatio="none">
+                                  {/* Grid Lines */}
+                                  {[0, 0.25, 0.5, 0.75, 1].map((pct, i) => {
+                                    const y = i * 47.5 + 5;
+                                    return (
+                                      <line
+                                        key={i}
+                                        x1="0"
+                                        y1={y}
+                                        x2="800"
+                                        y2={y}
+                                        className="stroke-slate-200 dark:stroke-border"
+                                        strokeWidth="1"
+                                        strokeDasharray="4 4"
+                                      />
+                                    );
+                                  })}
+
+                                  {/* Bar Pairs */}
+                                  {monthlyData.map((data, index) => {
+                                    const totalBars = monthlyData.length;
+                                    const colWidth = 800 / totalBars;
+                                    const barW = Math.min(16, Math.max(5, colWidth / 3.2));
+                                    const xCenter = (index + 0.5) * colWidth;
+
+                                    const commH = (data.commission / maxVal) * 190;
+                                    const paidH = (data.paid / maxVal) * 190;
+
+                                    const yComm = 195 - commH;
+                                    const yPaid = 195 - paidH;
+
+                                    return (
+                                      <g key={data.monthKey} className="group">
+                                        <rect
+                                          x={index * colWidth}
+                                          y="0"
+                                          width={colWidth}
+                                          height="195"
+                                          className="fill-transparent group-hover:fill-slate-100/60 dark:group-hover:fill-slate-800/40 transition-colors"
+                                        />
+                                        <rect
+                                          x={xCenter - barW - 1.5}
+                                          y={yComm}
+                                          width={barW}
+                                          height={Math.max(0, commH)}
+                                          fill="#0051c3"
+                                          rx="1.5"
+                                          className="transition-all duration-200 group-hover:brightness-110"
+                                        />
+                                        <rect
+                                          x={xCenter + 1.5}
+                                          y={yPaid}
+                                          width={barW}
+                                          height={Math.max(0, paidH)}
+                                          fill="#06b6d4"
+                                          rx="1.5"
+                                          className="transition-all duration-200 group-hover:brightness-110"
+                                        />
+                                        <title>{`${data.label}\nDue: ${formatCurrency(data.commission)}\nPaid: ${formatCurrency(data.paid)}`}</title>
+                                      </g>
+                                    );
+                                  })}
+                                </svg>
+                              </div>
+                            </div>
+
+                            {/* HTML X-Axis Month Labels */}
+                            <div className="relative w-full h-9 pl-16 pr-2">
+                              <div className="relative w-full h-full">
+                                {monthlyData.map((data, index) => {
+                                  const totalBars = monthlyData.length;
+                                  const leftPct = ((index + 0.5) / totalBars) * 100;
+                                  const shortLabel = data.label.replace(/ (\d{2})(\d{2})/, " '$2");
+                                  return (
+                                    <div
+                                      key={data.monthKey}
+                                      className="absolute text-[10px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap -rotate-45 origin-top-left transition-colors hover:text-slate-900 dark:hover:text-foreground"
+                                      style={{ left: `${leftPct}%`, top: "6px" }}
+                                    >
+                                      {shortLabel}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-3.5 h-3.5 bg-[var(--chart-2)] rounded"></span>
-                        <span>Receipts Paid</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* SVG Container */}
-                  <div className="h-64 w-full relative">
-                    {monthlyData.length === 0 ? (
-                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">No chart data available</div>
-                    ) : (
-                      <svg className="w-full h-full" viewBox="0 0 800 240" preserveAspectRatio="none">
-                        {/* Grids */}
-                        {[0, 1, 2, 3, 4].map((grid, i) => {
-                          const y = 20 + i * 45;
-                          return (
-                            <line
-                              key={i}
-                              x1="40"
-                              y1={y}
-                              x2="780"
-                              y2={y}
-                              stroke="var(--border)"
-                              strokeWidth="1"
-                              strokeDasharray="4 4"
-                            />
-                          );
-                        })}
-
-                        {/* Bars rendering */}
-                        {(() => {
-                          // Find max value to scale chart
-                          const maxVal = Math.max(
-                            ...monthlyData.map((d) => Math.max(d.commission, d.paid, 5000))
-                          );
-                          const chartWidth = 720;
-                          const barSpacing = chartWidth / monthlyData.length;
-                          const barWidth = Math.min(20, barSpacing / 3);
-
-                          return monthlyData.map((data, index) => {
-                            const xBase = 60 + index * barSpacing;
-                            const commHeight = (data.commission / maxVal) * 160;
-                            const paidHeight = (data.paid / maxVal) * 160;
-
-                            const yComm = 200 - commHeight;
-                            const yPaid = 200 - paidHeight;
-
-                            return (
-                              <g key={data.monthKey} className="group">
-                                {/* Commission Bar */}
-                                <rect
-                                  x={xBase - barWidth / 2 - 2}
-                                  y={yComm}
-                                  width={barWidth}
-                                  height={commHeight}
-                                  fill="var(--chart-1)"
-                                  rx="2"
-                                  className="transition-all duration-300 hover:opacity-80"
-                                />
-
-                                {/* Paid Bar */}
-                                <rect
-                                  x={xBase + barWidth / 2 + 2}
-                                  y={yPaid}
-                                  width={barWidth}
-                                  height={paidHeight}
-                                  fill="var(--chart-2)"
-                                  rx="2"
-                                  className="transition-all duration-300 hover:opacity-80"
-                                />
-
-                                {/* X Label */}
-                                <text
-                                  x={xBase}
-                                  y="222"
-                                  fill="currentColor"
-                                  className="fill-muted-foreground"
-                                  fontSize="9"
-                                  textAnchor="end"
-                                  transform={`rotate(-35, ${xBase}, 222)`}
-                                >
-                                  {data.label.replace(/ (\d{2})(\d{2})/, " '$2")}
-                                </text>
-
-                                {/* Hover tooltip values */}
-                                <title>
-                                  {`${data.label}\nDue: ${formatCurrency(data.commission)}\nPaid: ${formatCurrency(data.paid)}`}
-                                </title>
-                              </g>
-                            );
-                          });
-                        })()}
-                      </svg>
-                    )}
-                  </div>
+                    );
+                  })()}
                 </Card>
 
                 {/* Main Dashboard Grid */}
