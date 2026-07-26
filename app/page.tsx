@@ -24,6 +24,7 @@ import {
   UserPlus,
   LogOut,
   PlusCircle,
+  ArrowUpDown,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -132,6 +133,17 @@ export default function Home() {
   const [txSearch, setTxSearch] = useState("");
   const [txTypeFilter, setTxTypeFilter] = useState("ALL");
   const [txAgentFilter, setTxAgentFilter] = useState("ALL");
+  const [txSortField, setTxSortField] = useState<string>("project");
+  const [txSortOrder, setTxSortOrder] = useState<"asc" | "desc">("asc");
+
+  const handleTxSort = (field: string) => {
+    if (txSortField === field) {
+      setTxSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setTxSortField(field);
+      setTxSortOrder("asc");
+    }
+  };
   
   const [pmtSearch, setPmtSearch] = useState("");
   const [pmtTypeFilter, setPmtTypeFilter] = useState("ALL");
@@ -602,6 +614,38 @@ export default function Home() {
     return matchesSearch && matchesType && matchesAgent;
   });
 
+  const sortedTx = [...filteredTx].sort((a, b) => {
+    let valA: any = "";
+    let valB: any = "";
+
+    if (txSortField === "project") {
+      valA = (a.project || "").toLowerCase();
+      valB = (b.project || "").toLowerCase();
+    } else if (txSortField === "client") {
+      valA = a.client.toLowerCase();
+      valB = b.client.toLowerCase();
+    } else if (txSortField === "price") {
+      valA = a.price;
+      valB = b.price;
+    } else if (txSortField === "commission") {
+      valA = a.commission;
+      valB = b.commission;
+    } else if (txSortField === "agent") {
+      valA = (a.agent?.name || "").toLowerCase();
+      valB = (b.agent?.name || "").toLowerCase();
+    } else if (txSortField === "dealType") {
+      valA = a.dealType.toLowerCase();
+      valB = b.dealType.toLowerCase();
+    } else {
+      valA = new Date(a.date).getTime();
+      valB = new Date(b.date).getTime();
+    }
+
+    if (valA < valB) return txSortOrder === "asc" ? -1 : 1;
+    if (valA > valB) return txSortOrder === "asc" ? 1 : -1;
+    return 0;
+  });
+
   const filteredPmt = payments.filter((p) => {
     const matchesSearch =
       (p.memo && p.memo.toLowerCase().includes(pmtSearch.toLowerCase())) ||
@@ -1025,10 +1069,23 @@ export default function Home() {
                         ))}
                       </SelectContent>
                     </Select>
+
+                    <Select value={txSortField} onValueChange={(val) => { setTxSortField(val); setTxSortOrder(val === "project" ? "asc" : "desc"); }}>
+                      <SelectTrigger className="h-8 w-44 bg-white dark:bg-card border-slate-200 dark:border-border text-foreground text-xs rounded-sm py-1 px-2.5 font-medium">
+                        <SelectValue placeholder="Sort By" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border text-popover-foreground text-xs">
+                        <SelectItem value="project">Sort by Project & Unit</SelectItem>
+                        <SelectItem value="date">Sort by Date</SelectItem>
+                        <SelectItem value="client">Sort by Client</SelectItem>
+                        <SelectItem value="price">Sort by Price</SelectItem>
+                        <SelectItem value="commission">Sort by Commission</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <span className="text-[11px] text-muted-foreground font-medium">
-                    Showing {filteredTx.length} of {transactions.length} entries
+                    Showing {sortedTx.length} of {transactions.length} entries
                   </span>
                 </div>
 
@@ -1036,19 +1093,55 @@ export default function Home() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Agent</TableHead>
-                        <TableHead>Client / Property</TableHead>
-                        <TableHead className="text-center">Type</TableHead>
-                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="cursor-pointer hover:bg-slate-100 dark:hover:bg-accent/40" onClick={() => handleTxSort("date")}>
+                          <div className="flex items-center gap-1">
+                            Date
+                            <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-slate-100 dark:hover:bg-accent/40" onClick={() => handleTxSort("agent")}>
+                          <div className="flex items-center gap-1">
+                            Agent
+                            <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-slate-100 dark:hover:bg-accent/40" onClick={() => handleTxSort("client")}>
+                          <div className="flex items-center gap-1">
+                            Client
+                            <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                        </TableHead>
+                        <TableHead className="cursor-pointer hover:bg-slate-100 dark:hover:bg-accent/40 font-bold text-[#0051c3]" onClick={() => handleTxSort("project")}>
+                          <div className="flex items-center gap-1">
+                            Project & Unit
+                            <ArrowUpDown className="w-3 h-3 text-[#0051c3]" />
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-accent/40" onClick={() => handleTxSort("dealType")}>
+                          <div className="flex items-center justify-center gap-1">
+                            Type
+                            <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                        </TableHead>
+                        <TableHead className="text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-accent/40" onClick={() => handleTxSort("price")}>
+                          <div className="flex items-center justify-end gap-1">
+                            Price
+                            <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                        </TableHead>
                         <TableHead className="text-center">Rate</TableHead>
-                        <TableHead className="text-right">Commission</TableHead>
+                        <TableHead className="text-right cursor-pointer hover:bg-slate-100 dark:hover:bg-accent/40" onClick={() => handleTxSort("commission")}>
+                          <div className="flex items-center justify-end gap-1">
+                            Commission
+                            <ArrowUpDown className="w-3 h-3 text-muted-foreground" />
+                          </div>
+                        </TableHead>
                         <TableHead className="text-center">Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredTx.map((tx) => (
+                      {sortedTx.map((tx) => (
                         <TableRow key={tx.id}>
                           <TableCell>
                             {new Date(tx.date).toLocaleDateString("en-GB")}
@@ -1056,11 +1149,18 @@ export default function Home() {
                           <TableCell className="font-semibold">
                             {tx.agent?.name || "Direct"}
                           </TableCell>
+                          <TableCell className="font-medium">
+                            {tx.client}
+                          </TableCell>
                           <TableCell>
-                            <p className="font-medium">{tx.client}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {tx.project ? `${tx.project}` : ""} {tx.type ? `(${tx.type})` : ""}
-                            </p>
+                            <span className="font-semibold text-slate-800 dark:text-foreground">
+                              {tx.project || "—"}
+                            </span>
+                            {tx.type && (
+                              <span className="text-xs text-muted-foreground font-normal ml-1.5">
+                                ({tx.type})
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell className="text-center">
                             {tx.dealType === "SALE" ? (
