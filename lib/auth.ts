@@ -46,8 +46,8 @@ export async function verifySession(sessionStr: string | undefined): Promise<boo
   if (age < 0 || age > 30 * 24 * 60 * 60 * 1000) return false; // 30 days session age limit
 
   // Verify username match
-  const expectedUsername = process.env.ADMIN_USERNAME || "admin";
-  if (username !== expectedUsername) return false;
+  const expectedUsername = process.env.ADMIN_USERNAME;
+  if (!expectedUsername || username !== expectedUsername) return false;
 
   // Recompute expected hash
   const data = `${username}:${timestampStr}`;

@@ -6,8 +6,13 @@ export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
 
-    const expectedUsername = process.env.ADMIN_USERNAME || "admin";
-    const expectedPassword = process.env.ADMIN_PASSWORD || "admin";
+    const expectedUsername = process.env.ADMIN_USERNAME;
+    const expectedPassword = process.env.ADMIN_PASSWORD;
+
+    if (!expectedUsername || !expectedPassword) {
+      console.error("ADMIN_USERNAME or ADMIN_PASSWORD is not set in environment variables.");
+      return NextResponse.json({ error: "Server authentication misconfigured" }, { status: 500 });
+    }
 
     if (username !== expectedUsername || password !== expectedPassword) {
       return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
